@@ -134,4 +134,4 @@ ui:
 dev:
 	@echo 'COMMAND FOR LOCAL DEV'
 run: clean
-	docker-compose up --build
+	docker compose up --build
