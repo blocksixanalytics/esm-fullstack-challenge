@@ -57,20 +57,72 @@ const TopDriversByWins = () => {
   return null;
 };
 
-const BasicChart = () => {
+const TopConstructorsByWins = () => {
+  const [data, setData] = useState([]);
+  useEffect(() => {
+    httpClient(`${API_BASE_URL}/dashboard/top_teams_by_wins`).then(({ json }) =>
+      setData(json)
+    );
+  }, []);
+  if (!data.length) return null;
+
   return (
     <Plot
       data={[
         {
-          x: [1, 2, 3],
-          y: [2, 6, 3],
-          type: "scatter",
-          mode: "lines+markers",
-          marker: { color: "red" },
+          x: data.map((d) => d.constructor_name),
+          y: data.map((d) => d.number_of_wins),
+          type: "bar",
+          marker: { color: "royalblue" },
         },
-        { type: "bar", x: [1, 2, 3], y: [2, 5, 3] },
       ]}
-      layout={{ title: { text: "A Fancy Plot" } }}
+      layout={{
+        title: { text: "Top Constructors by Wins" },
+        margin: { t: 40, b: 80 },
+        xaxis: { tickangle: -45 },
+      }}
+      useResizeHandler
+      style={{ width: "100%", height: "100%" }}
+    />
+  );
+};
+
+const WinsOverTimeChart = () => {
+  const [data, setData] = useState([]);
+  useEffect(() => {
+    httpClient(`${API_BASE_URL}/dashboard/wins_over_time`).then(({ json }) =>
+      setData(json)
+    );
+  }, []);
+
+  if (!data.length) return null;
+
+  // Group data by driver
+  const driversMap = {};
+  data.forEach((item) => {
+    if (!driversMap[item.driver_name]) driversMap[item.driver_name] = [];
+    driversMap[item.driver_name].push({ x: item.year, y: item.wins });
+  });
+
+const plotData = Object.entries(driversMap).map(([name, points]) => ({
+    x: points.map((p) => p.x),
+    y: points.map((p) => p.y),
+    name,
+    type: "scatter",
+    mode: "lines+markers",
+  }));
+
+return (
+    <Plot
+      data={plotData}
+      layout={{
+        title: { text: "Driver Wins Over Time" },
+        xaxis: { title: "Year" },
+        yaxis: { title: "Number of Wins" },
+        margin: { t: 40, b: 60 },
+      }}
+      useResizeHandler
+      style={{ width: "100%", height: "100%" }}
     />
   );
 };
@@ -80,16 +132,19 @@ export const Dashboard = () => (
     <Title title="F1 Dashboard" />
     <Box sx={{ flexGrow: 1 }}>
       <Grid container spacing={2}>
-        <Grid size={6}>
-          <Typography variant="h4" gutterBottom sx={{ textAlign: "left" }}>
-            Top Drivers by Wins
-          </Typography>
-          <TopDriversByWins />
-        </Grid>
-        <Grid size={6}>
-          <BasicChart />
-        </Grid>
-      </Grid>
+  	<Grid item xs={12} sm={6}>
+    		<Typography variant="h4" gutterBottom sx={{ textAlign: "left" }}>
+      			Top Drivers by Wins
+    		</Typography>
+    		<TopDriversByWins />
+  	</Grid>
+  	<Grid item xs={12} sm={6}>
+    		<TopConstructorsByWins />
+  	</Grid>
+	<Grid item xs={12}>
+    		<WinsOverTimeChart />
+  	</Grid>
+	</Grid>
     </Box>
   </Card>
 );
